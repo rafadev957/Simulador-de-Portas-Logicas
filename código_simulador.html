@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Portas Lógicas</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #0f172a; /* Azul escuro/chumbo profissional (Slate 900) */
+      color: #f8fafc;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      background: #1e293b; /* Tom mais claro para destacar o card (Slate 800) */
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 30px;
+      text-align: center;
+      border: 1px solid #334155;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+      color: #f8fafc;
+    }
+
+    p.instructions {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      margin-bottom: 20px;
+    }
+
+    /* Teclado Virtual de Símbolos */
+    .toolbar-symbols {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .btn-symbol {
+      background-color: #334155;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #f8fafc;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-symbol:hover {
+      background-color: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .input-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .expression-input {
+      flex: 1;
+      height: 50px;
+      font-size: 1.2rem;
+      padding: 0 15px;
+      background-color: #0f172a;
+      color: #fff;
+      border: 2px solid #475569;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .expression-input:focus {
+      border-color: #3b82f6;
+    }
+
+    .btn-equal {
+      width: 50px;
+      height: 50px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #fff;
+      background-color: #3b82f6; /* Azul moderno */
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn-equal:hover {
+      background-color: #2563eb;
+    }
+
+    .result-box {
+      width: 70px;
+      height: 50px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-align: center;
+      background-color: #0f172a;
+      border: 2px solid #475569;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #38bdf8; /* Azul claro indicando display digital */
+    }
+
+    /* Tabelas Verdade Estáticas Empilhadas */
+    .tables-container {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .table-card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      border: 1px solid #334155;
+    }
+
+    .table-card h3 {
+      margin-bottom: 10px;
+      color: #38bdf8;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #334155;
+      padding: 8px;
+      text-align: center;
+      color: #cbd5e1;
+    }
+
+    th {
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Card do Simulador -->
+  <div class="container">
+    <h2>Simulador de Expressão Lógica</h2>
+    <p class="instructions">Monte a expressão clicando nos botões ou digitando no campo. Pressione <strong>ENTER</strong> ou clique em <strong>=</strong> para calcular.</p>
+    
+    <!-- Botões de Inserção Rápida (Teclado Virtual) -->
+    <div class="toolbar-symbols">
+      <button class="btn-symbol" onclick="inserirSimbolo('1')">1</button>
+      <button class="btn-symbol" onclick="inserirSimbolo('0')">0</button>
+      <button class="btn-symbol" onclick="inserirSimbolo('¬')">¬ NOT</button>
+      <button class="btn-symbol" onclick="inserirSimbolo(' ∧ ')">∧ AND</button>
+      <button class="btn-symbol" onclick="inserirSimbolo(' ∨ ')">∨ OR</button>
+      <button class="btn-symbol" onclick="inserirSimbolo(' ⊕ ')">⊕ XOR</button>
+      <button class="btn-symbol" onclick="inserirSimbolo('(')">(</button>
+      <button class="btn-symbol" onclick="inserirSimbolo(')')">)</button>
+    </div>
+
+    <!-- Linha do Input, Igual e Resultado -->
+    <div class="input-group">
+      <input type="text" id="expressaoInput" class="expression-input" placeholder="Ex: 1 ∧ (0 ∨ 1)" />
+      <button id="btnCalcular" class="btn-equal">=</button>
+      <div id="divResultado" class="result-box">?</div>
+    </div>
+  </div>
+
+  <!-- Tabelas-Verdade de Referência -->
+  <div class="tables-container">
+    
+    <!-- NOT -->
+    <div class="table-card">
+      <h3>Porta NOT (¬)</h3>
+      <table>
+        <tr><th>A</th><th>Saída</th></tr>
+        <tr><td>0</td><td>1</td></tr>
+        <tr><td>1</td><td>0</td></tr>
+      </table>
+    </div>
+
+    <!-- AND -->
+    <div class="table-card">
+      <h3>Porta AND (∧)</h3>
+      <table>
+        <tr><th>A</th><th>B</th><th>Saída</th></tr>
+        <tr><td>0</td><td>0</td><td>0</td></tr>
+        <tr><td>0</td><td>1</td><td>0</td></tr>
+        <tr><td>1</td><td>0</td><td>0</td></tr>
+        <tr><td>1</td><td>1</td><td>1</td></tr>
+      </table>
+    </div>
+
+    <!-- OR -->
+    <div class="table-card">
+      <h3>Porta OR (∨)</h3>
+      <table>
+        <tr><th>A</th><th>B</th><th>Saída</th></tr>
+        <tr><td>0</td><td>0</td><td>0</td></tr>
+        <tr><td>0</td><td>1</td><td>1</td></tr>
+        <tr><td>1</td><td>0</td><td>1</td></tr>
+        <tr><td>1</td><td>1</td><td>1</td></tr>
+      </table>
+    </div>
+
+    <!-- XOR -->
+    <div class="table-card">
+      <h3>Porta XOR (⊕)</h3>
+      <table>
+        <tr><th>A</th><th>B</th><th>Saída</th></tr>
+        <tr><td>0</td><td>0</td><td>0</td></tr>
+        <tr><td>0</td><td>1</td><td>1</td></tr>
+        <tr><td>1</td><td>0</td><td>1</td></tr>
+        <tr><td>1</td><td>1</td><td>0</td></tr>
+      </table>
+    </div>
+
+  </div>
+
+  <script>
+    const inputEl = document.getElementById('expressaoInput');
+    const btnEl = document.getElementById('btnCalcular');
+    const resultadoEl = document.getElementById('divResultado');
+
+    // Hierarquia de precedência: NOT > AND > OR > XOR
+    const PRECEDENCIA = {
+      '¬': 4,
+      '∧': 3,
+      '∨': 2,
+      '⊕': 1
+    };
+
+    // Insere o caractere diretamente na posição do cursor no campo de texto
+    function inserirSimbolo(simbolo) {
+      const startPos = inputEl.selectionStart;
+      const endPos = inputEl.selectionEnd;
+      const valorAtual = inputEl.value;
+
+      inputEl.value = valorAtual.substring(0, startPos) + simbolo + valorAtual.substring(endPos);
+      inputEl.focus();
+      
+      // Ajusta a posição do cursor após a inserção
+      const novaPosicao = startPos + simbolo.length;
+      inputEl.setSelectionRange(novaPosicao, novaPosicao);
+    }
+
+    // 1. Separa operandos, operadores e parênteses em tokens
+    function tokenizar(expr) {
+      const tokens = expr.match(/[01]|¬|∧|∨|⊕|\(|\)/g);
+      if (!tokens || tokens.join('') !== expr.replace(/\s+/g, '')) {
+        throw new Error("Caractere inválido na expressão");
+      }
+      return tokens;
+    }
+
+    // 2. Converte de notação infixa para Notação Polonesa Reversa (RPN) via Shunting-Yard
+    function infixaParaRPN(tokens) {
+      const saida = [];
+      const pilhaOperadores = [];
+
+      for (const token of tokens) {
+        if (token === '0' || token === '1') {
+          saida.push(Number(token));
+        } else if (token === '¬') {
+          pilhaOperadores.push(token);
+        } else if (token in PRECEDENCIA) {
+          while (
+            pilhaOperadores.length > 0 &&
+            pilhaOperadores[pilhaOperadores.length - 1] !== '(' &&
+            PRECEDENCIA[pilhaOperadores[pilhaOperadores.length - 1]] >= PRECEDENCIA[token]
+          ) {
+            saida.push(pilhaOperadores.pop());
+          }
+          pilhaOperadores.push(token);
+        } else if (token === '(') {
+          pilhaOperadores.push(token);
+        } else if (token === ')') {
+          while (pilhaOperadores.length > 0 && pilhaOperadores[pilhaOperadores.length - 1] !== '(') {
+            saida.push(pilhaOperadores.pop());
+          }
+          if (pilhaOperadores.length === 0) throw new Error("Parênteses desbalanceados");
+          pilhaOperadores.pop(); // Remove '('
+        }
+      }
+
+      while (pilhaOperadores.length > 0) {
+        const op = pilhaOperadores.pop();
+        if (op === '(') throw new Error("Parênteses desbalanceados");
+        saida.push(op);
+      }
+
+      return saida;
+    }
+
+    // 3. Avalia a expressão pós-fixa utilizando uma pilha (stack)
+    function avaliarRPN(rpn) {
+      const pilha = [];
+
+      for (const token of rpn) {
+        if (typeof token === 'number') {
+          pilha.push(token);
+        } else if (token === '¬') {
+          if (pilha.length < 1) throw new Error("Expressão inválida");
+          const a = pilha.pop();
+          pilha.push(a === 1 ? 0 : 1);
+        } else {
+          if (pilha.length < 2) throw new Error("Expressão inválida");
+          const b = pilha.pop();
+          const a = pilha.pop();
+
+          if (token === '∧') pilha.push(a & b);
+          else if (token === '∨') pilha.push(a | b);
+          else if (token === '⊕') pilha.push(a ^ b);
+        }
+      }
+
+      if (pilha.length !== 1) throw new Error("Expressão malformada");
+      return pilha[0];
+    }
+
+    // Coordena as etapas de processamento da expressão
+    function avaliarExpressao(expr) {
+      const tokens = tokenizar(expr);
+      const rpn = infixaParaRPN(tokens);
+      return avaliarRPN(rpn);
+    }
+
+    // Executa o cálculo e atualiza a interface
+    function executarCalculo() {
+      const expressao = inputEl.value.trim();
+      if (!expressao) {
+        resultadoEl.textContent = "?";
+        return;
+      }
+
+      try {
+        const resultado = avaliarExpressao(expressao);
+        resultadoEl.textContent = resultado;
+      } catch (error) {
+        resultadoEl.textContent = "Erro";
+      }
+    }
+
+    // Disparadores (Clique no botão '=' e Tecla ENTER)
+    btnEl.addEventListener('click', executarCalculo);
+
+    inputEl.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        executarCalculo();
+      }
+    });
+  </script>
+
+</body>
+</html>
